@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Space Invaders - Déploiement Simplifié</title>
+  <style>
+    body {
+      background: black;
+      margin: 0;
+      overflow: hidden;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #000;
+      border: 2px solid white;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 Space Invaders</h1>
+  <canvas id="gameCanvas" width="600" height="600"></canvas>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const playerImg = new Image();
+    const alienImg = new Image();
+    playerImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAAAXNSR0IArs4c6QAAAIRlWElmTU0AKgAAAAgABwESAAMAAAABAAEAAAEaAAUAAAABAAAAVAcEbQAAAANQTFRFAAAA////vb29////29vb/////v7+////z8/P////y8vL////39/f////yMjI////9/f3////AACeGh7JAAAAAF0Uk5TAEDAPr38sEhTCDydb4ITgFxRIymJztFvheBZfyqCkU7S1PqYyqxTxHmxLE3NRLt55nE5SkTXKzI7TPFg2LwAAAAlwSFlzAAAOxAAADsQBlSsOGwAAAXxJREFUaN7t1LsOwjAQRNHhaJ3QeP//pxtIGlDZpqmpoHTvl4uJMZ+bks7TxFwAAAAAAAAAAAACAzsoWpsjyaSeZvHd49BsuuGhs1z+q3Gvm1d6/Hv1Ebs4r9fd2b7v+y1VvuXRLv5z3q1PKMqbN1c/p2CmvzzSnOMUks5zllLec5ZSzrPWUo5z1lLOc9ZSznPWWs7r2zMum7udNNc1c2WXvWV79Z1X3vlUAAAAAAAAAAAAAv6wDVR0Pb0v3yk8AAAAASUVORK5CYII=";
+    alienImg.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADwAAAA8CAYAAAA6/NlyAAAAAXNSR0IArs4c6QAAAItJREFUaEPtmEEKwCAMBEeP//9Xp2YplAWOD8fEiX3S0vCwZhsFoLAIAAAAAAAAAAAAAAHgHZL/8YFqkD2NzfTOOnXnnTp17169ep3qfdahY2+4TeLMTDf9Ntd2yWPPdb27bXe6XanYbDfF63bW+ga3S6TyFd/9F3n8AAAAASUVORK5CYII=";
+
+    let player = {
+      x: 275, y: 530, width: 50, height: 50, speed: 5
+    };
+    let keys = {};
+    let bullets = [];
+    let aliens = [];
+    let direction = 1;
+    let gameStarted = false;
+
+    function initAliens() {
+      aliens = [];
+      for (let i = 0; i < 5; i++) {
+        aliens.push({ x: 60 * i + 60, y: 60, width: 40, height: 40 });
+      }
+    }
+
+    function drawAliens() {
+      if (!alienImg.complete || alienImg.naturalWidth === 0) return;
+      aliens.forEach(a => ctx.drawImage(alienImg, a.x, a.y, a.width, a.height));
+    }
+
+    function drawPlayer() {
+      if (!playerImg.complete || playerImg.naturalWidth === 0) return;
+      ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+    }
+
+    function drawBullets() {
+      ctx.fillStyle = "yellow";
+      bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
+    }
+
+    function update() {
+      if (keys["ArrowLeft"]) player.x -= player.speed;
+      if (keys["ArrowRight"]) player.x += player.speed;
+      bullets.forEach((b, i) => {
+        b.y -= 5;
+        if (b.y < 0) bullets.splice(i, 1);
+      });
+      aliens.forEach((a, ai) => {
+        bullets.forEach((b, bi) => {
+          if (b.x < a.x + a.width && b.x + b.width > a.x &&
+              b.y < a.y + a.height && b.y + b.height > a.y) {
+            aliens.splice(ai, 1);
+            bullets.splice(bi, 1);
+          }
+        });
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPlayer();
+      drawBullets();
+      drawAliens();
+    }
+
+    function gameLoop() {
+      if (!gameStarted) return;
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+      gameStarted = true;
+      initAliens();
+      gameLoop();
+    }
+
+    window.addEventListener("keydown", e => {
+      keys[e.key] = true;
+      if (e.key === " " && gameStarted) {
+        bullets.push({
+          x: player.x + player.width / 2 - 2,
+          y: player.y,
+          width: 4,
+          height: 10
+        });
+      }
+    });
+    window.addEventListener("keyup", e => keys[e.key] = false);
+
+    Promise.all([
+      new Promise(res => playerImg.onload = res),
+      new Promise(res => alienImg.onload = res)
+    ]).then(() => {
+      startGame();
+    });
+  </script>
+</body>
+</html>
